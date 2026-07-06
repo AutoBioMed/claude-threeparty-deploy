@@ -1,18 +1,33 @@
 # ccx · Claude Code 多供应商 / 多模型切换器
 
-> 在任意 Linux / macOS 主机上，让 **Claude Code 命令行**一键接入**硅基流动 / 智谱官方 / DeepSeek 官方**等第三方大模型，
-> 并在同一会话里用 `/model` 自由切换多个模型（含多模态视觉）。无 GUI、无需 sudo。
+> 一个让 **Claude Code 命令行**接入国产大模型（硅基流动 / 智谱 / DeepSeek）的小工具。
+> 无需 GUI、无需 sudo，一条命令即可在多个模型、多模态之间自由切换。
 
 ![shell](https://img.shields.io/badge/shell-bash%20%7C%20zsh-89e051)
 ![platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS-lightgrey)
 ![license](https://img.shields.io/badge/license-MIT-blue)
 ![version](https://img.shields.io/badge/version-1.1.0-orange)
 
-在任意 Linux / macOS 主机上，让 **Claude Code 命令行**接入**硅基流动 (SiliconFlow) / 智谱 / DeepSeek** 等 API，
-并用一个自制切换器 `ccx` 实现「多供应商切换」+「会话内多模型/多模态自由切换」。
+---
 
-> 原理：Claude Code 走 Anthropic Messages API 协议，硅基流动提供了 **Anthropic 兼容端点**，
-> 因此只需设置几个环境变量即可直连，无需任何协议转换代理。
+## 这是什么？
+
+[Claude Code](https://claude.ai) 是 Anthropic 官方的命令行编程助手，默认只能用 Claude 模型（需付费登录、且国内访问不便）。
+
+本工具通过设置几个环境变量，把 Claude Code「接管」到**国产大模型**上，让你用更低的成本、国内网络直连，享受同样的命令行编程体验。核心是一个自制切换器 `ccx`，帮你一键切换供应商和模型。
+
+## 功能与特点
+
+- ✅ **一键接入三家供应商**：硅基流动 (SiliconFlow) / 智谱官方 (BigModel) / DeepSeek 官方，用 `ccx <名字>` 随时切换。
+- ✅ **会话内多模型切换**：进入 `claude` 后用 `/model` 在多个模型间实时切换，**无需重启**。
+- ✅ **多模态（看图）支持**：内置视觉模型映射，可直接分析截图、图片、网页 / GUI 界面。
+- ✅ **多槽位智能映射**：把 Claude 的 Opus / Sonnet / Haiku 三个「槽位」分别映射到最合适的模型（旗舰推理 / 多模态 / 便宜快速），各司其职。
+- ✅ **零依赖、免 sudo、免 GUI**：纯 bash 脚本，服务器 / SSH / 无桌面环境都能用。
+- ✅ **自动记忆**：新开终端自动恢复你上次选择的供应商，不用重设。
+- ✅ **随时切回官方**：一句 `ccx official` 回到官方 Claude 登录。
+
+> **原理**：Claude Code 走 Anthropic Messages API 协议，上述供应商都提供了 **Anthropic 兼容端点**，
+> 所以只需设置几个环境变量即可直连，无需任何协议转换代理。
 
 ---
 
@@ -81,22 +96,105 @@ claude --version
 
 ---
 
-## 第 2 步：获取 API Key（只需填要用的那家）
+## 第 2 步：获取 API Key（只需注册要用的那家）
 
-编辑 `~/.config/claude-switch/keys.env`，按需填入：
+到对应供应商官网注册账号，创建一个 API Key（一串通常以 `sk-` 开头的字符串），**复制**下来备用：
 
-| 变量 | 用于 | 获取地址 |
+| 供应商 | 对应 ccx 模式 | 获取地址 |
 |---|---|---|
-| `SILICONFLOW_KEY` | glm/glmv/kimi/multi | <https://cloud.siliconflow.cn/account/ak> |
-| `ZHIPU_KEY` | zhipu | <https://open.bigmodel.cn/usercenter/apikeys> |
-| `DEEPSEEK_KEY` | deepseek | <https://platform.deepseek.com/api_keys> |
+| 硅基流动 SiliconFlow | glm / glmv / kimi / multi | <https://cloud.siliconflow.cn/account/ak> |
+| 智谱 BigModel | zhipu | <https://open.bigmodel.cn/usercenter/apikeys> |
+| DeepSeek | deepseek | <https://platform.deepseek.com/api_keys> |
 
-> 硅基流动默认用国内站 `https://api.siliconflow.cn`；国际站改 `ccx.sh` 里 `_ccx_sf_common()`。
-> 智谱国内用 BigModel `open.bigmodel.cn`；若用 Z.ai 国际站，把 `zhipu)` 段的 base 改成 `https://api.z.ai/api/anthropic`。
+> 只需注册你打算用的那一家即可，其余可留空。新用户通常都有免费额度，注册后在「API Keys / 密钥管理」页面点击「新建」即可拿到。
 
 ---
 
-## 第 3 步：使用 ccx 切换器
+## 第 3 步：把 Key 填进配置文件
+
+拿到 Key 后，要把它写进配置文件 `~/.config/claude-switch/keys.env`，`ccx` 启动时才会读到它。
+
+> 小知识：`~` 代表你的用户主目录（如 `/home/xx03`）。这个文件在第 1 步安装时由 `install.sh` 自动创建，权限为 `600`（仅本人可读，安全）。
+
+下面三种方法**任选一种**：
+
+### 方法 A：用 Cursor / 编辑器打开填写（直观，推荐）
+
+1. 在 Cursor 里按 `Ctrl+O`（或菜单 File → Open File），在路径栏粘贴下面这行后回车：
+
+```
+~/.config/claude-switch/keys.env
+```
+
+如果打不开，就用完整路径（把 `你的用户名` 换成实际的，例如 `xx03`）：
+
+```
+/home/你的用户名/.config/claude-switch/keys.env
+```
+
+2. 找到你要用的那一行，把**引号里的占位文字**替换成你复制的真实 Key。例如用硅基流动：
+
+```bash
+# 改之前（占位）
+SILICONFLOW_KEY="sk-在此粘贴你的硅基流动Key"
+# 改之后（换成你的真实 Key）
+SILICONFLOW_KEY="sk-abcd1234你复制来的真实key"
+```
+
+3. 按 `Ctrl+S` 保存。没用到的那几家保持原样或留空都行。
+
+### 方法 B：用命令行编辑器填写（服务器 / 无界面）
+
+```bash
+nano ~/.config/claude-switch/keys.env
+# 改完按 Ctrl+O 回车保存, 再按 Ctrl+X 退出
+# 习惯 vim 也可以: vim ~/.config/claude-switch/keys.env
+```
+
+### 方法 C：一条命令直接写入（最快，把 sk-xxx 换成你的 Key）
+
+```bash
+# 硅基流动
+sed -i 's#^SILICONFLOW_KEY=.*#SILICONFLOW_KEY="sk-xxx"#' ~/.config/claude-switch/keys.env
+# 智谱
+sed -i 's#^ZHIPU_KEY=.*#ZHIPU_KEY="你的智谱key"#'        ~/.config/claude-switch/keys.env
+# DeepSeek
+sed -i 's#^DEEPSEEK_KEY=.*#DEEPSEEK_KEY="sk-xxx"#'       ~/.config/claude-switch/keys.env
+```
+
+配置文件本身长这样，把每行引号内的占位内容换成真实 Key 即可：
+
+```bash
+# 硅基流动 (glm / glmv / kimi / multi 使用)
+SILICONFLOW_KEY="sk-在此粘贴你的硅基流动Key"
+# 智谱官方 BigModel (zhipu 使用)
+ZHIPU_KEY="在此粘贴你的智谱Key"
+# DeepSeek 官方 (deepseek 使用)
+DEEPSEEK_KEY="sk-在此粘贴你的DeepSeekKey"
+```
+
+### 确认填对了
+
+```bash
+# ① 查看文件内容, 确认 Key 已写入
+cat ~/.config/claude-switch/keys.env
+
+# ② 测试硅基流动 Key 是否有效(能列出一堆模型 = Key 正常)
+source ~/.config/claude-switch/keys.env
+curl -s -H "Authorization: Bearer $SILICONFLOW_KEY" \
+     https://api.siliconflow.cn/v1/models | head -c 200; echo
+```
+
+> ⚠️ **常见坑：**
+> - Key 两边的**英文双引号别删**；`=` 两边**不要留空格**。
+> - 从网页复制时注意**别多带进空格或换行**。
+> - 改完 Key 后，若 `claude` 正在运行，需**退出重开**才生效。
+
+> 关于服务器地址：硅基流动默认用国内站 `https://api.siliconflow.cn`；智谱默认用 BigModel `open.bigmodel.cn`。若要改用国际站（如智谱 Z.ai），见下文「自定义 / 增删模型」。
+
+---
+
+## 第 4 步：使用 ccx 切换器
 
 安装后**新开一个终端**（或 `source ~/.bashrc`），即可用 `ccx`：
 
