@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude CLI × 硅基流动 多供应商配置指南</title>
+<style>
+  :root{
+    --bg:#0f1220; --card:#171b2e; --card2:#1e2440; --ink:#e8ebf5; --muted:#9aa3bd;
+    --accent:#7c8cff; --accent2:#37d0a8; --warn:#ffb454; --danger:#ff6b81; --line:#2a3157;
+    --code:#0b0e1a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(160deg,#0f1220,#131730 60%,#0f1220);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.7;padding:0 0 80px}
+  .wrap{max-width:960px;margin:0 auto;padding:0 20px}
+  header{padding:56px 0 28px;text-align:center;border-bottom:1px solid var(--line);margin-bottom:32px}
+  header h1{font-size:32px;margin:0 0 10px;letter-spacing:.5px}
+  header .sub{color:var(--muted);font-size:15px}
+  .badges{margin-top:16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .badge{background:var(--card2);border:1px solid var(--line);color:var(--muted);
+    padding:4px 12px;border-radius:20px;font-size:12.5px}
+  .badge b{color:var(--accent2)}
+  h2{font-size:22px;margin:40px 0 14px;display:flex;align-items:center;gap:10px}
+  h2 .n{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;
+    background:var(--accent);color:#0b0e1a;border-radius:9px;font-size:15px;font-weight:700;flex:none}
+  h3{font-size:16.5px;margin:22px 0 8px;color:#cfd5f0}
+  p{margin:8px 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:16px 0}
+  .muted{color:var(--muted)}
+  ul,ol{margin:8px 0 8px 4px;padding-left:22px}
+  li{margin:5px 0}
+  code{background:var(--code);border:1px solid var(--line);border-radius:5px;padding:1.5px 6px;
+    font-family:"JetBrains Mono","SF Mono",Consolas,monospace;font-size:13px;color:#ffd479}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:12px;padding:16px 18px;overflow:auto;
+    position:relative;margin:12px 0}
+  pre code{background:none;border:none;padding:0;color:#d7ffe9;font-size:13px;line-height:1.65;white-space:pre}
+  .cmt{color:#6f7aa0}
+  .k{color:#7c8cff}.s{color:#37d0a8}.v{color:#ffd479}
+  .note{border-left:4px solid var(--accent);background:var(--card2);border-radius:0 12px 12px 0;padding:12px 16px;margin:14px 0}
+  .warn{border-left:4px solid var(--warn);background:#2a2314;border-radius:0 12px 12px 0;padding:12px 16px;margin:14px 0}
+  .danger{border-left:4px solid var(--danger);background:#2a1620;border-radius:0 12px 12px 0;padding:12px 16px;margin:14px 0}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}
+  th{background:var(--card2);color:#cfd5f0}
+  td code{font-size:12.5px}
+  .steps{counter-reset:step;list-style:none;padding:0}
+  .flow{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+  .flow .chip{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:14px}
+  .flow .arr{color:var(--accent);align-self:center;font-weight:700}
+  .kbd{background:var(--card2);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 7px;font-size:12.5px}
+  a{color:var(--accent)}
+  footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;text-align:center}
+  .ok{color:var(--accent2);font-weight:600}
+  .tag{display:inline-block;background:var(--accent2);color:#06251c;font-weight:700;font-size:11px;padding:2px 8px;border-radius:6px;vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Claude CLI × 硅基流动 · 多供应商配置指南</h1>
+  <div class="sub">在 Claude Code 命令行下，一键切换 GLM-5.2 / DeepSeek / Kimi / 官方 Claude</div>
+  <div class="badges">
+    <span class="badge">主机 <b>Ubuntu 22.04</b></span>
+    <span class="badge">用户 <b>xx03</b>（SSH）</span>
+    <span class="badge">claude CLI <b>2.1.152</b></span>
+    <span class="badge">方案 <b>无 GUI · 无 sudo</b></span>
+    <span class="badge">生成 <b>2026-07-05</b></span>
+  </div>
+</header>
+
+<div class="card">
+  <p style="margin:0"><b>这份文档是什么？</b> 记录了把 Claude Code(命令行版) 接到<strong>第三方硅基流动 API</strong> 的完整配置流程，
+  以及一个自制的「无 GUI 多供应商切换器 <code>ccx</code>」的用法。它的作用等价于 cc-switch 对 Claude Code 做的事——
+  多家大模型、一键切换——但完全在终端里完成，不需要图形界面，也不需要 root 权限。</p>
+</div>
+
+<!-- 背景 -->
+<h2><span class="n">0</span>为什么没用 cc-switch 图形版</h2>
+<div class="card">
+  <p>cc-switch 是 Tauri 桌面 GUI 应用。安装本身<span class="ok">已成功</span>（deb 及 <code>libwebkit2gtk-4.1</code> 等依赖都装好了），
+  但运行时崩溃：<code>Failed to initialize GTK</code>。</p>
+  <p><b>根因：</b>这台机器停在 <b>GDM 登录界面</b>，没有任何用户登录进 GNOME 桌面；<code>Xorg</code>/<code>gnome-shell</code> 都属于 <code>gdm</code>，
+  而 <code>xx03</code> 只是通过 SSH 连入，<b>没有可绘制的图形显示</b>，因此 GUI 无法启动。</p>
+  <div class="note">要用 GUI 版：需在机器物理屏幕前用 <code>xx03</code> 登录进桌面，或配置 VNC/远程桌面，再在桌面终端运行 <code>cc-switch</code>。
+  纯 SSH 场景下，下面的 <b>CLI 方案</b>是更合适的等效替代。</div>
+</div>
+
+<!-- 原理 -->
+<h2><span class="n">1</span>原理：Claude Code 如何接第三方 API</h2>
+<div class="card">
+  <p>Claude Code 走 <b>Anthropic Messages API</b> 协议，通过下面几个环境变量即可指向任意兼容端点：</p>
+  <table>
+    <tr><th>环境变量</th><th>作用</th><th>本方案取值</th></tr>
+    <tr><td><code>ANTHROPIC_BASE_URL</code></td><td>API 地址（<b>不带</b> /v1，CC 会自动补 /v1/messages）</td><td><code>https://api.siliconflow.cn</code></td></tr>
+    <tr><td><code>ANTHROPIC_AUTH_TOKEN</code></td><td>Bearer 鉴权 token（首选）</td><td>你的硅基流动 Key</td></tr>
+    <tr><td><code>ANTHROPIC_MODEL</code></td><td>主模型 ID</td><td><code>zai-org/GLM-5.2</code></td></tr>
+    <tr><td><code>ANTHROPIC_SMALL_FAST_MODEL</code></td><td>后台小任务模型</td><td><code>zai-org/GLM-5.2</code></td></tr>
+  </table>
+  <div class="note">硅基流动官方已提供 <b>Anthropic 兼容端点</b>，所以无需 OneAPI/LiteLLM 之类的协议转换代理，直连即可。
+  <code>zai-org/GLM-5.2</code> 为已核实的模型 ID。</div>
+</div>
+
+<!-- 已完成 -->
+<h2><span class="n">2</span>我已经帮你做好的部分</h2>
+<div class="card">
+  <ul>
+    <li>确认环境：Ubuntu 22.04、claude CLI 2.1.152、claude 以 <code>xx03</code> 身份运行、<code>~/.claude</code> 可写。</li>
+    <li>核实硅基流动 Anthropic 兼容端点与 <code>zai-org/GLM-5.2</code> 模型 ID。</li>
+    <li>创建无 GUI 切换器脚本：<code>~/.config/claude-switch/ccx.sh</code></li>
+    <li>创建凭据文件（占位，权限 600）：<code>~/.config/claude-switch/keys.env</code></li>
+    <li>挂载到 <code>~/.bashrc</code>（幂等，新终端自动加载）。</li>
+    <li>功能自测通过（<code>ccx list / glm / status / official</code> 均正常，测试后已复位为 official，不影响当前登录）。</li>
+  </ul>
+</div>
+
+<!-- 待办 -->
+<h2><span class="n">3</span>你现在要做的两步 <span class="tag">关键</span></h2>
+<div class="card">
+  <h3>① 填入硅基流动 API Key（一次性）</h3>
+<pre><code><span class="k">nano</span> ~/.config/claude-switch/keys.env</code></pre>
+  <p class="muted">把这一行的占位值换成你真实的 Key（以 <code>sk-</code> 开头）：</p>
+<pre><code><span class="v">SILICONFLOW_KEY</span>=<span class="s">"sk-你的真实硅基流动Key"</span>
+<span class="cmt"># glm / deepseek / kimi 共用这一个 Key</span></code></pre>
+
+  <h3>② 新开一个终端，切换并启动</h3>
+<pre><code><span class="k">ccx</span> glm        <span class="cmt"># 切到硅基流动 GLM-5.2</span>
+<span class="k">claude</span>         <span class="cmt"># 启动，即用 GLM-5.2</span></code></pre>
+  <div class="warn"><b>务必新开终端</b>（让 <code>~/.bashrc</code> 生效）。你当前正在跑的 claude 进程不会自动切换，需退出后重启。</div>
+</div>
+
+<!-- 日常用法 -->
+<h2><span class="n">4</span>日常用法</h2>
+<div class="card">
+  <div class="flow">
+    <span class="chip">编辑 keys.env 填 Key（仅一次）</span><span class="arr">→</span>
+    <span class="chip"><code>ccx &lt;供应商&gt;</code></span><span class="arr">→</span>
+    <span class="chip"><code>claude</code></span>
+  </div>
+  <table>
+    <tr><th>命令</th><th>说明</th></tr>
+    <tr><td><code>ccx list</code></td><td>列出所有供应商 + 当前选择</td></tr>
+    <tr><td><code>ccx glm</code></td><td>硅基流动 GLM-5.2 <span class="ok">（已核实可用）</span></td></tr>
+    <tr><td><code>ccx glmv</code></td><td>硅基流动 GLM-4.5V 多模态（看图）</td></tr>
+    <tr><td><code>ccx multi</code></td><td><b>多槽位映射</b>：进 claude 后用 <code>/model</code> 实时切换多个模型 <span class="tag">推荐</span></td></tr>
+    <tr><td><code>ccx deepseek</code></td><td>硅基流动 DeepSeek（模型 slug 见第 6 节说明）</td></tr>
+    <tr><td><code>ccx kimi</code></td><td>硅基流动 Kimi（模型 slug 见第 6 节说明）</td></tr>
+    <tr><td><code>ccx official</code></td><td>切回官方 Claude 登录（OAuth）</td></tr>
+    <tr><td><code>ccx status</code></td><td>查看当前 BASE_URL / MODEL / 槽位映射</td></tr>
+  </table>
+  <div class="note">新开的终端会<strong>自动记住</strong>你上次选的供应商（记录在 <code>~/.config/claude-switch/current</code>）。每次切换后重启 <code>claude</code> 即生效。</div>
+
+  <h3>★ 会话内自由切换多个模型（多槽位映射 + 多模态）</h3>
+  <p>Claude Code 运行时会<strong>多模型协作</strong>：主推理模型 + 背景小任务模型。它支持把 Opus/Sonnet/Haiku 三个「槽位」各自映射到不同模型，
+  并可给每个槽位声明能力（如 <code>vision</code> 视觉）。用 <code>ccx multi</code> 一次配好后，进入 claude 用 <code>/model</code> 命令即可
+  <strong>在同一会话里实时切换</strong>，无需退出重启。</p>
+  <table>
+    <tr><th>Claude 槽位</th><th>映射的硅基流动模型</th><th>用途</th><th>能力</th></tr>
+    <tr><td>Opus</td><td><code>zai-org/GLM-5.2</code></td><td>旗舰编码 / 长程推理</td><td>tools, thinking</td></tr>
+    <tr><td>Sonnet</td><td><code>zai-org/GLM-4.5V</code></td><td><b>多模态 / 看图 / GUI / 文档</b></td><td><b>vision</b>, tools</td></tr>
+    <tr><td>Haiku</td><td><code>zai-org/GLM-4.1V-9B-Thinking</code></td><td>便宜快速 / 背景任务（也能看图）</td><td><b>vision</b>, tools</td></tr>
+    <tr><td>自定义项</td><td><code>Qwen/Qwen3-VL-32B-Instruct</code></td><td>大上下文（262K）多模态</td><td><b>vision</b>, tools</td></tr>
+  </table>
+<pre><code><span class="k">ccx</span> multi      <span class="cmt"># 配好多槽位映射</span>
+<span class="k">claude</span>         <span class="cmt"># 启动</span>
+<span class="cmt"># 进入会话后：</span>
+/model         <span class="cmt"># 弹出菜单，在 GLM-5.2 / GLM-4.5V / GLM-4.1V / Qwen3-VL 间实时切换</span></code></pre>
+  <div class="note"><b>多模态说明：</b>需要看图/截图分析时，用 <code>/model</code> 切到 <b>Sonnet(GLM-4.5V)</b> 或自定义 <b>Qwen3-VL</b>——它们标了 <code>vision</code> 能力，可直接接收图片输入。
+  纯代码/推理任务切回 <b>Opus(GLM-5.2)</b> 即可。背景小任务由 Haiku(GLM-4.1V) 承担，省钱。</div>
+</div>
+
+<!-- 验证 -->
+<h2><span class="n">5</span>验证 Key 是否可用</h2>
+<div class="card">
+  <p>填好 Key 后，测试连通性（能列出模型即 Key 正常）：</p>
+<pre><code><span class="k">source</span> ~/.config/claude-switch/keys.env
+<span class="k">curl</span> -s -H <span class="s">"Authorization: Bearer $SILICONFLOW_KEY"</span> \
+     https://api.siliconflow.cn/v1/models | head -c 300; echo</code></pre>
+</div>
+
+<!-- 自定义 -->
+<h2><span class="n">6</span>自定义 · 添加更多模型</h2>
+<div class="card">
+  <p>编辑 <code>~/.config/claude-switch/ccx.sh</code>，在 <code>_ccx_apply()</code> 的 <code>case</code> 里照葫芦画瓢加一段即可。例如加通义千问：</p>
+<pre><code><span class="v">qwen</span>)
+  <span class="k">export</span> ANTHROPIC_BASE_URL=<span class="s">"https://api.siliconflow.cn"</span>
+  <span class="k">export</span> ANTHROPIC_AUTH_TOKEN=<span class="s">"$SILICONFLOW_KEY"</span>
+  <span class="k">export</span> ANTHROPIC_MODEL=<span class="s">"Qwen/Qwen3-235B-A22B"</span>
+  <span class="k">export</span> ANTHROPIC_SMALL_FAST_MODEL=<span class="s">"Qwen/Qwen3-235B-A22B"</span> ;;</code></pre>
+  <p>然后把 <code>qwen</code> 也加进 <code>ccx()</code> 里那行 <code>glm|deepseek|kimi|official)</code> 的匹配即可。</p>
+  <div class="warn"><b>模型 ID 提醒：</b><code>deepseek</code> / <code>kimi</code> / <code>qwen</code> 里的 slug 为示例值。若调用报 <code>model not found</code>，
+  请到 <a href="https://www.siliconflow.cn/models" target="_blank">硅基流动模型页</a> 复制准确的模型 ID 替换。<code>zai-org/GLM-5.2</code> 已核实无误。</div>
+</div>
+
+<!-- 还原 -->
+<h2><span class="n">7</span>还原 / 卸载</h2>
+<div class="card">
+  <ul>
+    <li>临时切回官方：<code>ccx official</code> 后重启 claude。</li>
+    <li>彻底移除切换器：删掉 <code>~/.bashrc</code> 里 <code>&gt;&gt;&gt; claude-switch &gt;&gt;&gt;</code> 与 <code>&lt;&lt;&lt; claude-switch &lt;&lt;&lt;</code> 之间的三行，
+      再删除目录 <code>~/.config/claude-switch/</code>。</li>
+    <li>清理下载的安装包：<code>rm -rf "/home/xx03/骨关节炎_FINAL/.cc-switch-dl"</code>（CLI 方案用不到）。</li>
+  </ul>
+</div>
+
+<!-- 文件清单 -->
+<h2><span class="n">8</span>相关文件清单</h2>
+<div class="card">
+  <table>
+    <tr><th>路径</th><th>说明</th></tr>
+    <tr><td><code>~/.config/claude-switch/ccx.sh</code></td><td>切换器主脚本（可编辑加模型）</td></tr>
+    <tr><td><code>~/.config/claude-switch/keys.env</code></td><td>API Key（权限 600，<b>勿外传</b>）</td></tr>
+    <tr><td><code>~/.config/claude-switch/current</code></td><td>记录当前选中的供应商</td></tr>
+    <tr><td><code>~/.bashrc</code></td><td>已追加自动加载片段</td></tr>
+    <tr><td><code>骨关节炎_FINAL/.cc-switch-dl/</code></td><td>cc-switch 安装包（GUI 用，CLI 不需要，可删）</td></tr>
+  </table>
+  <div class="danger"><b>安全提示：</b><code>keys.env</code> 内含明文 API Key，请勿提交到 Git 或分享。已设为仅本人可读（chmod 600）。</div>
+</div>
+
+<h2><span class="n">9</span>智谱官方 / DeepSeek 官方 映射</h2>
+<div class="card">
+  <p>除硅基流动外，还内置两家<strong>官方直连</strong>，各自独立端点与 Key，同样多槽位映射，进 claude 后 <code>/model</code> 切换。
+  三家 Key 分别填在 <code>~/.config/claude-switch/keys.env</code>（<code>SILICONFLOW_KEY</code> / <code>ZHIPU_KEY</code> / <code>DEEPSEEK_KEY</code>）。</p>
+
+  <h3><code>ccx zhipu</code> — 智谱官方 BigModel　<span class="muted">https://open.bigmodel.cn/api/anthropic</span></h3>
+  <table>
+    <tr><th>槽位</th><th>模型</th><th>用途</th><th>能力</th></tr>
+    <tr><td>Opus</td><td><code>glm-5.2[1m]</code></td><td>旗舰/长程/1M上下文</td><td>tools, thinking</td></tr>
+    <tr><td>Sonnet</td><td><code>glm-4.6</code></td><td>日常编码/更省</td><td>tools</td></tr>
+    <tr><td>Haiku</td><td><code>glm-4.7</code></td><td>背景任务/低成本</td><td>tools</td></tr>
+    <tr><td>自定义</td><td><code>glm-4.5v</code></td><td><b>多模态/看图/GUI</b></td><td><b>vision</b>, tools</td></tr>
+  </table>
+  <div class="note"><code>[1m]</code> 后缀开启 1M 上下文（脚本已同时设 <code>CLAUDE_CODE_AUTO_COMPACT_WINDOW=1000000</code>）。若提示模型不存在，先 <code>claude update</code>。</div>
+
+  <h3><code>ccx deepseek</code> — DeepSeek 官方　<span class="muted">https://api.deepseek.com/anthropic</span></h3>
+  <table>
+    <tr><th>槽位</th><th>模型</th><th>用途</th><th>能力</th></tr>
+    <tr><td>Opus</td><td><code>deepseek-v4-pro[1m]</code></td><td>旗舰/1M/深度推理</td><td>tools, thinking</td></tr>
+    <tr><td>Sonnet</td><td><code>deepseek-v4-flash</code></td><td>快/便宜/日常</td><td>tools</td></tr>
+    <tr><td>Haiku</td><td><code>deepseek-v4-flash</code></td><td>背景任务</td><td>tools</td></tr>
+  </table>
+  <div class="warn"><b>DeepSeek 无多模态</b>，不能看图；需要视觉请用 <code>ccx zhipu</code>(GLM-4.5V) 或硅基流动 <code>ccx multi</code>。已按官方建议设 <code>CLAUDE_CODE_EFFORT_LEVEL=max</code>。</div>
+</div>
+
+<footer>
+  Claude CLI × 硅基流动 / 智谱 / DeepSeek 配置指南 · 生成于 2026-07-05 · 主机 xiaoxin-Super-Server
+</footer>
+</div>
+</body>
+</html>

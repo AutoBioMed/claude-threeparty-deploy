@@ -1,0 +1,18 @@
+# ==== 绝不能上传的敏感文件 ====
+keys.env              # 含明文 API Key
+current               # 本地当前选择记录
+*.key
+*.token
+
+# ==== 备份/临时 ====
+*.bak
+*.ccxbak
+*.tmp
+*.log
+
+# ==== 系统/编辑器 ====
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
