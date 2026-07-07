@@ -55,10 +55,10 @@ _ccx_apply() {
       export ANTHROPIC_DEFAULT_HAIKU_MODEL_DESCRIPTION="低成本/快速/可看图"
       export ANTHROPIC_DEFAULT_HAIKU_MODEL_SUPPORTED_CAPABILITIES="vision,tools"
       export ANTHROPIC_SMALL_FAST_MODEL="zai-org/GLM-4.1V-9B-Thinking"
-      export ANTHROPIC_CUSTOM_MODEL_OPTION="Qwen/Qwen3-VL-32B-Instruct"
-      export ANTHROPIC_CUSTOM_MODEL_OPTION_NAME="Qwen3-VL 大上下文"
-      export ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION="262K上下文/多模态"
-      export ANTHROPIC_CUSTOM_MODEL_OPTION_SUPPORTED_CAPABILITIES="vision,tools" ;;
+      export ANTHROPIC_CUSTOM_MODEL_OPTION="deepseek-ai/DeepSeek-V4-Pro"
+      export ANTHROPIC_CUSTOM_MODEL_OPTION_NAME="DeepSeek-V4-Pro"
+      export ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION="旗舰/深度推理(无视觉)"
+      export ANTHROPIC_CUSTOM_MODEL_OPTION_SUPPORTED_CAPABILITIES="tools,thinking" ;;
 
     # ---------------- 智谱官方 (BigModel) ----------------
     zhipu)                    # ★智谱官方 多槽位映射

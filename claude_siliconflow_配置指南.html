@@ -160,14 +160,14 @@
     <tr><td>Opus</td><td><code>zai-org/GLM-5.2</code></td><td>旗舰编码 / 长程推理</td><td>tools, thinking</td></tr>
     <tr><td>Sonnet</td><td><code>zai-org/GLM-4.5V</code></td><td><b>多模态 / 看图 / GUI / 文档</b></td><td><b>vision</b>, tools</td></tr>
     <tr><td>Haiku</td><td><code>zai-org/GLM-4.1V-9B-Thinking</code></td><td>便宜快速 / 背景任务（也能看图）</td><td><b>vision</b>, tools</td></tr>
-    <tr><td>自定义项</td><td><code>Qwen/Qwen3-VL-32B-Instruct</code></td><td>大上下文（262K）多模态</td><td><b>vision</b>, tools</td></tr>
+    <tr><td>自定义项</td><td><code>deepseek-ai/DeepSeek-V4-Pro</code></td><td>旗舰 / 深度推理（无视觉）</td><td>tools, thinking</td></tr>
   </table>
 <pre><code><span class="k">ccx</span> multi      <span class="cmt"># 配好多槽位映射</span>
 <span class="k">claude</span>         <span class="cmt"># 启动</span>
 <span class="cmt"># 进入会话后：</span>
-/model         <span class="cmt"># 弹出菜单，在 GLM-5.2 / GLM-4.5V / GLM-4.1V / Qwen3-VL 间实时切换</span></code></pre>
-  <div class="note"><b>多模态说明：</b>需要看图/截图分析时，用 <code>/model</code> 切到 <b>Sonnet(GLM-4.5V)</b> 或自定义 <b>Qwen3-VL</b>——它们标了 <code>vision</code> 能力，可直接接收图片输入。
-  纯代码/推理任务切回 <b>Opus(GLM-5.2)</b> 即可。背景小任务由 Haiku(GLM-4.1V) 承担，省钱。</div>
+/model         <span class="cmt"># 弹出菜单，在 GLM-5.2 / GLM-4.5V / GLM-4.1V / DeepSeek-V4-Pro 间实时切换</span></code></pre>
+  <div class="note"><b>多模态说明：</b>需要看图/截图分析时，用 <code>/model</code> 切到 <b>Sonnet(GLM-4.5V)</b>——标了 <code>vision</code> 能力，可直接接收图片输入。
+  需要更强的纯代码/深度推理时切到自定义 <b>DeepSeek-V4-Pro</b>（无视觉）；日常纯代码切回 <b>Opus(GLM-5.2)</b>。背景小任务由 Haiku(GLM-4.1V) 承担，省钱。</div>
 </div>
 
 <!-- 验证 -->
